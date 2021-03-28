@@ -66,11 +66,13 @@ router.put('/me', auth.authenticate, (req, res) => {
         res.send(401).send({ error: "Not logged in"});
     }
 
-    const { firstName, lastName } = req.body;
+    const { firstName, lastName, address, email } = req.body;
 
     const updateQuery = {};
     (firstName !== undefined) && (updateQuery.firstName = firstName);
     (lastName !== undefined) && (updateQuery.lastName = lastName);
+    (address !== undefined) && (updateQuery.address = lastName);
+    (email !== undefined) && (updateQuery.email = lastName);
 
     User.updateOne({ _id: req.session.userId }, updateQuery).then(() => {
         res.status(204).send();

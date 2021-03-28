@@ -5,7 +5,7 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 
 const app = express();
-app.use(require('express-session')({ secret: 'keyboard cat', resave: true, saveUninitialized: true }));
+//app.use(require('express-session')({ secret: 'keyboard cat', resave: true, saveUninitialized: true }));
 
 const api = require('./server/api');
 const db = require('./server/db');
@@ -15,15 +15,13 @@ require('dotenv').config();
 
 //Set port as process.env.PORT if it is present otherwise set it to 4000
 //const port = process.env.PORT || 4000;
-const port  = 27017;
-
+const port = 27017;
 //Initiate connection with database
 db.connect({
     host: process.env.DB_HOST,
     username: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME
-    
 }).then(() => {
     //Handle /api with the api middleware
     app.use('/api', session({
@@ -32,8 +30,8 @@ db.connect({
         },
         store: new MongoStore({ client: db.getClient() }),
         secret: process.env.SESSION_SECRET,
-        resave: true,
-        saveUninitialized: false
+        resave: false,
+        saveUninitialized: true,
     }), api);
 
     //Handle non-api routes with static build folder
@@ -48,6 +46,4 @@ db.connect({
     app.listen(port, () => {
         console.log(`Server listening at port: ${port}`);
     });
-
-
 });

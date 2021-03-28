@@ -14,6 +14,28 @@ const userSchema = new Schema({
     },
     firstName: String,
     lastName: String,
+    address:{
+        houseNo: {
+            type: Number,
+            required: true,
+            unique: true
+        },
+        Locality: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        City:{
+            type: String,
+            required: true,
+            unique: true
+        },
+        Pincode:{
+            type: Number,
+            required: true,
+            unique: true
+        },
+    },
     createdAt: {
         type: Date,
         default: Date.now()
