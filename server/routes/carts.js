@@ -7,14 +7,22 @@ const bcrypt = require('bcryptjs');
 const Cart = require('../models/cart');
 
 //Get a cart
-router.get('/sessions/:sessionid',(req,res) => {
+router.get('/me',(req,res) => {
     if (!req.body) {
         res.status(400).send({error: "Empty body sent in request"});
         return;
     }
-    const sessionId = req.params.sessionid;
+    const sessionId = req.session.id;
     Cart.findOne({ sessionId: sessionId }).then(cart => {
-        res.send(cart);
+        if(cart)
+        {
+            res.status(201).send(cart);
+        }
+        else
+        {
+            res.status(201).send({result:'No cart'});
+        }
+        
     }).catch(() => {
         res.status(500).send({ error: "Internal Server Error" });
     });
@@ -25,14 +33,14 @@ router.post('/', (req, res) => {
         res.status(400).send({error: "Empty body sent in request"});
         return;
     }
-    const { sessionId, cartItems } = req.body;
-
+    const {cartItem } = req.body;
+    const sessionId = req.session.id;
     if (!sessionId) {
         res.status(400).send({error: "sessionId not present in request"});
         return;
     }
 
-    if (!cartItems) {
+    if (!cartItem) {
         res.status(400).send({error: "cartItems not present in request"});
         return;
     }
@@ -42,9 +50,9 @@ router.post('/', (req, res) => {
         if (cart) 
         {
             console.log('Cart already exists');
-            cart.cartItems.push(cartItems);
+            cart.cartItems.push(cartItem);
             cart.save().then(() => {
-                res.status(204).send('Item Added to cart');
+                res.status(201).send('Item Added to cart');
             }).catch(() => {
                 res.status(500).send("Error while adding item to cart" );
             });
@@ -84,7 +92,7 @@ router.post('/', (req, res) => {
         }
 
        //if cart doesn't exist
-        const cartEntity = new Cart({ sessionId, cartItems});
+        const cartEntity = new Cart({ sessionId, cartItems: cartItem});
 
         cartEntity.save().then(() => {
             res.status(201).send({ id: sessionId });
@@ -102,7 +110,8 @@ router.put('/',(req,res) =>
         res.status(400).send({error: "Empty body sent in request"});
         return;
     }
-    const { sessionId, productId, qty} = req.body;
+    const sessionId = req.session.id;
+    const { productId, qty} = req.body;
     if (!sessionId) {
         res.status(400).send({error: "sessionId not present in request"});
         return;
@@ -130,7 +139,7 @@ router.put('/',(req,res) =>
               }
             console.log(cart.cartItems);
             cart.save().then(() => {
-                res.status(204).send('Item updated to cart');
+                res.status(204).send({result:'Item updated to cart'});
             }).catch((err) => {
                 res.status(500).send(err);
             });
@@ -170,41 +179,61 @@ router.put('/',(req,res) =>
         }
         else
         {
-            res.send('Invalid Session Id passed');
+            res.send({error:'Invalid Session Id passed'});
         }
         
     })
 
 })
-// //Remove an item from Cart DELETE /api/cart/<item-id>
-// router.delete('/', (req, res) => {
-//     if (!req.body) {
-//         res.status(400).send({error: "Empty body sent in request"});
-//         return;
-//     }
-//     const { sessionId, productId } = req.body;
+//Remove an item from Cart DELETE /api/cart/<item-id>
+router.delete('/', (req, res) => {
+    if (!req.body) {
+        res.status(400).send({error: "Empty body sent in request"});
+        return;
+    }
+    const sessionId = req.session.id;
+    const { productId } = req.body;
 
-//     if (!sessionId) {
-//         res.status(400).send({error: "sessionId not present in request"});
-//         return;
-//     }
+    if (!sessionId) {
+        res.status(400).send({error: "sessionId not present in request"});
+        return;
+    }
 
-//     if (!productId) {
-//         res.status(400).send({error: "productId not present in request"});
-//         return;
-//     }
+    if (!productId) {
+        res.status(400).send({error: "productId not present in request"});
+        return;
+    }
 
-//     Cart.updateOne( // select your doc in moongo
-//         { sessionId: sessionId}, // your query, usually match by _id
-//         { $remove: { results: { $elemMatch: { productId: productId } } } }, // item(s) to match from array you want to pull/remove
-//         { multi: true } // set this to true if you want to remove multiple elements.
-//     ).then(cart => {
-//         cart.save().then(() => {
-//             console.log("Product Removed");
-//         })
-//     }).then(() => {
-//         res.status(201).send({ id: sessionId });
-//     })
+    Cart.findOne({ sessionId }).then( cart => {
+        //if cart already exists
+        if (cart) 
+        {
+            for (let i = 0; i < cart.cartItems.length; i++) { 
+                if(cart.cartItems[i].productId === productId)
+                {
+                    delete(cart.cartItems[i]);
+                }
+              }
+            console.log('Cart Item deleted');
+            cart.save().then(() => {
+                res.status(201).send({result:'Item deleted from cart'});
+            }).catch(() => {
+                res.status(500).send({error:"Error while adding item to cart" });
+            });
+           
+            return;
+        }
+
+        else
+        {
+            res.send({error:'Invalid Session Id passed'});
+        }
+    }).catch(() => {
+        res.status(500).send({ error: "Internal Server Error" });
+    });
+    return;
+})
+
     
 //     return;
 // })

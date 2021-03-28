@@ -19,14 +19,11 @@ const port  = 27017;
 
 //Initiate connection with database
 db.connect({
-    // host: process.env.DB_HOST,
-    // username: process.env.DB_USER,
-    // password: process.env.DB_PASS,
-    // database: process.env.DB_NAME
-    host: 'instanceecom.ihpgx.mongodb.net',
-    database: 'myFirstDatabase',
-    username: 'admin',
-    password: 'admin'
+    host: process.env.DB_HOST,
+    username: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME
+    
 }).then(() => {
     //Handle /api with the api middleware
     app.use('/api', session({
